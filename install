@@ -1,0 +1,82 @@
+#!/bin/env sh
+
+
+set -o errexit -o pipefail -o noclobber -o nounset
+
+readonly LOG_FILE=${$HOME/install.log}
+readonly red='\033[0;31m'
+readonly green='\033[0;32m'
+readonly purple='\033[0;35m'
+readonly normal='\033[0m'
+
+_w() {
+  local -r text="${1:-}"
+  echo -e "$text"
+}
+_a() { _w " > $1"; }
+_e() { _a "${red}$1${normal}"; }
+_s() { _a "${green}$1${normal}"; }
+_q() { read -rp "🤔 $1: " "$2"; }
+
+_log() {
+  log_name="$1"
+  current_date=$(date "+%Y-%m-%d %H:%M:%S")
+
+  touch "$LOG_FILE"
+  echo "----- $current_date - $log_name -----" >>"$LOG_FILE"
+
+  while IFS= read -r log_message; do
+    echo "$log_message" >>"$LOG_FILE"
+  done
+
+  echo "" >>"$LOG_FILE"
+}
+
+_die() {
+    _e "$1"
+    exit 1
+}
+
+_command_exists() {
+    type "$1" >/dev/null 2>&1
+}
+
+_ansible_playbook() {
+    docker run --rm -it quay.io/ansible/creator-ee ansible-playbook "$@"
+}
+
+_ensure_command() {
+    local -r command=$1
+    if ! command_exists "$command"; then
+        _e "$command not installed, trying to install"
+
+        if command_exists "$command"; then
+            _a "Installing using apt"
+            sudo apt -y install "$command" 2>&1 | _log "Installing $command"
+        elif command_exists dnf; then
+            _a "Installing using dnf"
+            sudo dnf -y install "$command" 2>&1 | _log "Installing $command"
+        elif command_exists yum; then
+            _a "Installing using yum"
+            yes | sudo yum install "$command" 2>&1 | _log "Installing $command"
+        elif command_exists brew; then
+            _a "Installing using brew"
+            yes | brew install "$command" 2>&1 | _log "Installing $command"
+        elif command_exists pacman; then
+            _a "Installing using pacman"
+            sudo pacman -S --noconfirm "$command" 2>&1 | _log "Installing $command"
+        else
+            _die "Could not install $command, no package provider found"
+            exit 1
+        fi
+    fi
+}
+
+
+_ensure_command docker
+_ensure_command git
+
+git clone https://github.com/cadimmek/ansible.git /tmp/ansible
+_ansible_playbook setup_workstations.yml
+
+rm -rf /tmp/ansible

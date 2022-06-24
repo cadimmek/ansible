@@ -1,0 +1,81 @@
+---
+- name: Ensure base packages
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ lookup('file', 'base_packages.txt').splitlines() }}"
+  become: true
+
+- name: Install SDKman
+  ansible.builtin.shell: curl -s https://get.sdkman.io | bash
+
+- name: Install fonts
+  copy:
+    src: fonts/
+    dest: /usr/local/share/fonts
+  become: yes
+
+- name: Ensure ui packages
+  ansible.builtin.package:
+    name: "{{ item }}"
+    state: present
+  loop: "{{ lookup('file', 'ui_packages.txt').splitlines() }}"
+  become: true
+
+- name: Install IntelliJ Ultimate
+  community.general.snap:
+    name: intellij-idea-ultimate
+    classic: yes
+
+- name: Ensure group "docker" exists
+  group:
+    name: docker
+    state: present
+  become: yes
+
+- name: Update own user profile
+  user:
+    name: '{{host_username}}'
+    shell: /bin/zsh
+    groups: docker
+    append: yes
+    create_home: yes
+    password: '*' # Initial password is none, account locked
+    update_password: on_create # Do not reset password from ansible
+  become: yes
+
+- name: Update root user profile
+  user:
+    name: root
+    shell: /bin/zsh
+  become: yes
+
+- name: Ensure home directory has correct permissions
+  file:
+    path: '/home/{{host_username}}/'
+    state: directory
+    mode: '0700'
+    owner: '{{host_username}}'
+    group: '{{host_username}}'
+  become: yes
+
+- name: Create ~/.ssh/
+  file:
+    path: '/home/{{host_username}}/.ssh'
+    state: directory
+    mode: '0700'
+    owner: '{{host_username}}'
+    group: '{{host_username}}'
+  become: yes
+
+- name: Enable and start system services
+  service:
+    name: '{{item}}'
+    state: started
+    enabled: yes
+  loop:
+    - firewalld
+    - resolvconf
+    - ssh
+  become: yes
+
