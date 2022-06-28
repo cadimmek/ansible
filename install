@@ -50,19 +50,19 @@ _ensure_command() {
     if ! command_exists "$command"; then
         _e "$command not installed, trying to install"
 
-        if command_exists "$command"; then
+        if _command_exists "$command"; then
             _a "Installing using apt"
             sudo apt -y install "$command" 2>&1 | _log "Installing $command"
-        elif command_exists dnf; then
+        elif _command_exists dnf; then
             _a "Installing using dnf"
             sudo dnf -y install "$command" 2>&1 | _log "Installing $command"
-        elif command_exists yum; then
+        elif _command_exists yum; then
             _a "Installing using yum"
             yes | sudo yum install "$command" 2>&1 | _log "Installing $command"
-        elif command_exists brew; then
+        elif _command_exists brew; then
             _a "Installing using brew"
             yes | brew install "$command" 2>&1 | _log "Installing $command"
-        elif command_exists pacman; then
+        elif _command_exists pacman; then
             _a "Installing using pacman"
             sudo pacman -S --noconfirm "$command" 2>&1 | _log "Installing $command"
         else
