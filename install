@@ -50,7 +50,7 @@ _ensure_command() {
     if ! _command_exists "$command"; then
         _e "$command not installed, trying to install"
 
-        if _command_exists "$command"; then
+        if _command_exists apt; then
             _a "Installing using apt"
             sudo apt -y install "$command" 2>&1 | _log "Installing $command"
         elif _command_exists dnf; then
