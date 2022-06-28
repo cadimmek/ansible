@@ -77,6 +77,6 @@ _ensure_command docker
 _ensure_command git
 
 git clone https://github.com/cadimmek/ansible.git /tmp/ansible
-_ansible_playbook setup_workstations.yml
+#_ansible_playbook setup_workstations.yml
 
 rm -rf /tmp/ansible

@@ -15,6 +15,12 @@
     dest: /usr/local/share/fonts
   become: yes
 
+- name: Install Wallpapers
+  copy:
+    src: wallpapers/
+    dest: /usr/local/share/wallpapers
+  become: yes
+
 - name: Ensure ui packages
   ansible.builtin.package:
     name: "{{ item }}"
@@ -67,6 +73,21 @@
     owner: '{{host_username}}'
     group: '{{host_username}}'
   become: yes
+
+- name: Install dotfiles
+  ansible.builtin.shell: sh -c "$(curl -fsLS chezmoi.io/get)" -- init --apply {{ github_username }}
+
+- name: Install SDKs
+  block:
+    - name: Install Java
+      ansible.builtin.shell: sdk install java
+    - name: Install Gradle
+      ansible.builtin.shell: sdk install gradle
+    - name: Install Maven
+      ansible.builtin.shell: sdk install maven
+    - name: Install kscript
+      ansible.builtin.shell: sdk install kscript
+  become_user: '{{host_username}}'
 
 - name: Enable and start system services
   service:
