@@ -47,7 +47,7 @@ _ansible_playbook() {
 
 _ensure_command() {
     local -r command=$1
-    if ! command_exists "$command"; then
+    if ! _command_exists "$command"; then
         _e "$command not installed, trying to install"
 
         if _command_exists "$command"; then
